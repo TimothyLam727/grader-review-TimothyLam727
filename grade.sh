@@ -1,3 +1,4 @@
+
 CPATH='.:../lib/hamcrest-core-1.3.jar:../lib/junit-4.13.2.jar'
 
 rm -rf student-submission
@@ -20,7 +21,8 @@ then
 	echo "file exist"
 
 else 
-	"wrong file"
+	echo "wrong file input"
+	echo "Grade: 0/2"
 
 fi
 
@@ -29,14 +31,33 @@ cp -r TestListExamples.java grading-area/
 
 cd grading-area
 
-javac -cp $CPATH *.java
-java -cp $CPATH org.junit.runner.JUnitCore TestListExamples > output.txt
 
-if [ -$? -eq 0 ]
+
+javac -cp $CPATH *.java 2> error.txt
+
+if [ $? -eq 0 ]
 then
-	echo "Test runs successfully"
+	java -cp $CPATH org.junit.runner.JUnitCore TestListExamples > output.txt
 
-else 
-	echo "Test fails"
+	
+	passed_line=$(grep "OK" output.txt)
 
+	if [ -n "$passed_line" ]
+       	then
+	        grade=$(echo "$passed_line" | grep -oE '[0-9]+')
+	        echo "Grade : $grade/$grade"
+		echo "great job!"
+	else 
+	        num_tests_line=$(grep -oE "Tests run: [0-9]+" output.txt)
+       		numTests=$(echo "$num_tests_line" | grep -oE '[0-9]+')
+        	num_failed_line=$(grep -oE "Failures: [0-9]+" output.txt)
+        	numFailed=$(echo "$num_tests_line" | grep -oE '[0-9]+')
+        	numCorrect=$((numTests - numFailed))
+        	echo "Grade : $numCorrect/$numTests"
+		echo "good try"
+	fi
+
+else
+	echo "Compilation error"
+	echo "Grade: 0/2"
 fi
